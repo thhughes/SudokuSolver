@@ -2,9 +2,13 @@ from Node import *
 import csv
 
 class Sudoku():
-    def __init__(self, board=None): """ Constructor...
+    def __init__(self, board=None):
+        """ Constructor...
         Designed to allow copy-construction. Should help with recursion/
         general traversion """
+        self._board = []
+        self._depth = []
+        
         if board is None:
             self._board = []
         else:
@@ -21,7 +25,8 @@ class Sudoku():
                 
 
 
-    def make_board(self,file_name):""" Board constructor ...
+    def make_board(self,file_name):
+        """ Board constructor ...
         Allows the board to be populated from file """
         f = open(file_name,"r")
         file_content = f.read()
@@ -41,7 +46,26 @@ class Sudoku():
             soduku_row = []
         self._populate()
 
-    def _populate(self): """ Node Possible List setter and self._depth builder """
+    def p_depth(self):
+        """ Print's the depth field"""
+        print "-"*9*2 + "------"
+        for j,row in enumerate(self._depth):
+            if j == 3 or j == 6:
+                print "-"*9*2 + "------"
+            ##print "String command" + row[0].string()
+            s = "||"
+            for i,item in enumerate(row):
+                if i == 3 or i == 6:
+                    s = s+"|"
+                
+                s = s+str(item)+" "
+            s = s+"||"
+            print s
+        print "-"*9*2 + "------"
+            
+
+    def _populate(self):
+        """ Node Possible List setter and self._depth builder """
         for y,row in enumerate(self._board):
             for x,item in enumerate(row):
                 item.set_p(self._get_possible(x,y))
@@ -70,12 +94,13 @@ class Sudoku():
                 s = s+item.string()+" "
             s = s+"||"
             print s
-        print "-"*9*2 + "----"
+        print "-"*9*2 + "------"
         return " "
                     
 
 
-    def _get_row(self,which_row): """ get's used values in a row """
+    def _get_row(self,which_row):
+        """ get's used values in a row """
         if which_row > 8 or which_row < 0:
             raise RuntimeError("Error checking Row: Row out of bounds")
         tmprow = self._board[which_row]
@@ -85,7 +110,8 @@ class Sudoku():
                 row.append(item)
         return row
 
-    def _get_column(self, which_column): """ Get's used values in column"""
+    def _get_column(self, which_column):
+        """ Get's used values in column"""
         if which_column > 8 or which_column < 0:
             raise RuntimeError("Error checking column: column out of bounds")
         column = []
@@ -94,7 +120,8 @@ class Sudoku():
                 column.append(row[which_column])
         return column
 
-    def _get_cube(self, which_cube): """ Get's used values in a cube """
+    def _get_cube(self, which_cube):
+        """ Get's used values in a cube """
         if which_cube > 8 or which_cube < 0:
             raise RuntimeError("Error checking cube: cube out of bounds")
         cube_dict = {0:(0,0,2,2),
@@ -115,7 +142,8 @@ class Sudoku():
                         cube.append(item)
         return cube
 
-    def _xyToCube(self,x,y): """ Converts x,y to cube space """
+    def _xyToCube(self,x,y):
+        """ Converts x,y to cube space """
         if x > 8 or y > 8 or y < 0 or x < 0:
             raise RuntimeError("xyToCube out of bounds 0 < x < 8; 0 < y< 8")
         if y >= 0 and x >= 0 and y <= 2 and x <= 2: return 0
@@ -133,14 +161,16 @@ class Sudoku():
         
 
 
-    def _check_valid(self,value,x,y):""" T/F Return on if value at xy is legal"""
+    def _check_valid(self,value,x,y):
+        """ T/F Return on if value at xy is legal"""
         cube = self._xyToCube(x,y)
         if value in self._get_row(y): return False
         elif value in self._get_column(x): return False
         elif value in self._get_cube(cube): return False
         else: return True
 
-    def _get_possible(self,x,y): """ Get the list of possible values for a position"""
+    def _get_possible(self,x,y):
+        """ Get the list of possible values for a position"""
         cube = self._xyToCube(x,y)
         npos = []
         npos.extend(self._get_row(y))
@@ -163,3 +193,5 @@ class Sudoku():
         
 a = Sudoku()
 a.make_board("Board00.txt")
+print a
+a.p_depth()
