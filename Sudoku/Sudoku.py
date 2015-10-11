@@ -2,8 +2,24 @@ from Node import *
 import csv
 
 class Sudoku():
-    def __init__(self, file_name):
-        self._board = []
+    def __init__(self, board=None):
+        if board is None:
+            self._board = []
+        else:
+            if len(board) == 9:
+                for row in board:
+                    if len(row) != 9: raise RuntimeError("Improper size board passed to Sudoku class")
+                    for item in row:
+                        val = item.value()
+                        if val is None: continue
+                        if type(val) is not int: raise RuntimeError("Improper Node value on board")
+                        if val < 0 or val > 9: raise RuntimeError("Value out of bounds for Nodes")                        
+            self._board = board
+            self._populate()
+                
+
+
+    def make_board(self,file_name):
         f = open(file_name,"r")
         file_content = f.read()
         file_content = file_content.split('\n')
@@ -20,9 +36,22 @@ class Sudoku():
                     soduku_row.append(Node(int(square)))
             self._board.append(soduku_row)
             soduku_row = []
+        self._populate()
 
-
-
+    def _populate(self):
+        for y,row in enumerate(self._board):
+            for x,item in enumerate(row):
+                item.set_p(self._get_possible(x,y))
+        
+        self._depth = []
+        for y,row in enumerate(self._board):
+            tmp = []
+            for x,item in enumerate(row):
+                tmp.append(len(item.get_possible()))
+            self._depth.append(tmp)
+                
+                
+    
     def __str__(self):
         ##print self._board
         print "-"*9*2 + "------"
@@ -107,6 +136,20 @@ class Sudoku():
         elif value in self._get_column(x): return False
         elif value in self._get_cube(cube): return False
         else: return True
+
+    def _get_possible(self,x,y):
+        cube = self._xyToCube(x,y)
+        npos = []
+        npos.extend(self._get_row(y))
+        npos.extend(self._get_column(x))
+        npos.extend(self._get_cube(cube))
+
+        pos = [1,2,3,4,5,6,7,8,9,"_"]
+        for num in set(npos):
+            if num in pos:
+                pos.remove(num)
+        pos.remove("_")
+        return pos
                     
         
             
@@ -115,4 +158,5 @@ class Sudoku():
             
     
         
-a = Sudoku("Board00.txt")
+a = Sudoku()
+a.make_board("Board00.txt")
