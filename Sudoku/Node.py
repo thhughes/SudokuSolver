@@ -66,11 +66,15 @@ class Node():
     def get_possible(self):
         """ Get the possible list ...
             Returns empty list when the value's been set to simplify logic for
-            knowing 'how many items are possible' for other nodes"""
+            knowing 'how many items are possible' for other nodes
+
+            Note: returns a boolean as well to tell you if there are 0 values it could be
+            or if the value has just been set. 
+            """
         if self._value is not None:
-            return []
+            return [], True
         else:
-            return self._p
+            return self._p, False
     def get_notp(self):
         """ Get the not possible list ...
         If the 'value' has been set, return all but that value """

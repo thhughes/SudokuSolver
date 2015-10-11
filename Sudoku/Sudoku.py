@@ -2,7 +2,7 @@ from Node import *
 import csv
 
 class Sudoku():
-    def __init__(self, board=None):
+    def __init__(self, board=None,new_val=None,x=None,y=None):
         """ Constructor...
         Designed to allow copy-construction. Should help with recursion/
         general traversion """
@@ -21,6 +21,12 @@ class Sudoku():
                         if type(val) is not int: raise RuntimeError("Improper Node value on board")
                         if val < 0 or val > 9: raise RuntimeError("Value out of bounds for Nodes")                        
             self._board = board
+            if new_val is not None:
+                for by,row in enumerate(self._board):
+                    if by != y: continue
+                    for bx,item in enumerate(row):
+                        if bx != x: continue
+                        else: self._board[y][x] = Node(new_val)
             self._populate()
                 
 
@@ -58,10 +64,40 @@ class Sudoku():
                 if i == 3 or i == 6:
                     s = s+"|"
                 
-                s = s+str(item)+" "
+                s = s+str(item[0])+" "
             s = s+"||"
             print s
         print "-"*9*2 + "------"
+
+    def place_node(self, value, x,y):
+        """ Given Node value, and xy location:
+            Returns a board with the new node on it and True
+            or
+            Returns None and False if the node at that location is illegal"""
+        if not self._check_value(value,x,y): return None, False
+        for by,row in enumerate(self._board):
+            if by != y: continue
+            for bx,item in enumerate(row):
+                if bx != x: continue
+                else:
+                    new_board = Sudoku(self._board,val,x,y)
+                    return new_board, True
+
+    def depth_dict(self):
+        depth_dict = {}
+        for row in self._depth:
+            for item in row:
+                if item[0] is "X":continue
+                if item[0] in depth_dict:
+                    point = (item[1],item[2]) ## x,y format 
+                    depth_dict[item[0]].append(point)
+                else:
+                    point_list = []
+                    point = (item[1],item[2]) ## x,y format 
+                    depth_dict[item[0]] = point_list
+                    depth_dict[item[0]].append(point)
+        return depth_dict
+        
             
 
     def _populate(self):
@@ -74,7 +110,14 @@ class Sudoku():
         for y,row in enumerate(self._board):
             tmp = []
             for x,item in enumerate(row):
-                tmp.append(len(item.get_possible()))
+                packet = []
+                possible,val_filled = item.get_possible()
+                if val_filled:
+                    packet.append("X")
+                else:
+                    packet.append(len(possible))
+                packet.extend([x,y])
+                tmp.append(packet)
             self._depth.append(tmp)
                 
                 
@@ -195,3 +238,7 @@ a = Sudoku()
 a.make_board("Board00.txt")
 print a
 a.p_depth()
+b = a.depth_dict()
+for i in b:
+    print i,b[i]
+    
