@@ -10,8 +10,18 @@ class Node():
             
     def __str__(self):
         return self.string()
+    def __repr__(self):
+        return self.string()
+    
+    def __eq__(self,other):
+        return self._value == other
+    
     def string(self):
         if self._value == None:
             return "_"
         else:
             return str(self._value)
+    def val(self):
+        return self._value
+    
+
