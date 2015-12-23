@@ -234,11 +234,11 @@ class Sudoku():
             
     
         
-a = Sudoku()
-a.make_board("Board00.txt")
-print a
-a.p_depth()
-b = a.depth_dict()
-for i in b:
-    print i,b[i]
-    
+# a = Sudoku()
+# a.make_board("Board00.txt")
+# print a
+# a.p_depth()
+# b = a.depth_dict()
+# for i in b:
+#     print i,b[i]
+#
