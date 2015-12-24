@@ -63,6 +63,11 @@ class Sudoku:
         print rowDivider
         return ""
 
+    def show(self):
+        self._printCurrentBoard()
+        self.printDepthMap()
+
+
     def _inbounds(self,val):
         if val > self._size or val < 0:
             raise SudokuException("Value is out of bounds")
@@ -73,6 +78,9 @@ class Sudoku:
     """ ------------------------------------------
         Getter Functions
     """
+    def getBoard(self):
+        return self._b
+
     def getRow(self, val):
         try:
             self._inbounds(val)
@@ -121,7 +129,7 @@ class Sudoku:
 
 
     def getPossible(self, row, column):
-        if (self._b[row][column] == Node(None)):
+        if not (self._b[row][column] == Node(None)):
             raise SudokuException("Given node is already filled")
         usedRow = self.getRow(row)
         usedCol = self.getColumn(column)
@@ -135,6 +143,31 @@ class Sudoku:
 
         notUsed = list(self._validList - totalUsed)
         return notUsed
+
+    def getDepthOf(self,val):
+        depthList = []
+        for row,r in enumerate(self._b):
+            for column,v in enumerate(r):
+                try:
+                    possibleList = self.getPossible(row,column)
+                    if len(possibleList) == val:
+                        depthList.append((possibleList[0],row,column))
+                except SudokuException,e:
+                    continue
+        return depthList
+
+    def getCountOfDepth(self,val):
+        counter = 0
+        for row,r in enumerate(self._b):
+            for column,v in enumerate(r):
+                try:
+                    possibleList = self.getPossible(row,column)
+                    if len(possibleList) == val:
+                        counter = counter + 1
+                except SudokuException,e:
+                    continue
+        return counter
+
 
     """ -----------------------------------
         Setter Function
