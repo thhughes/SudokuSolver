@@ -1,5 +1,6 @@
 __author__ = 'troyhughes'
 from Node import Node
+from Node import NodeException
 import math
 
 class Sudoku:
@@ -32,10 +33,14 @@ class Sudoku:
 
 
     def _printCurrentBoard(self):
+
+        NineStage = "--0-1-2--3-4-5--6-7-8"
         rowDivider = "----------------------"
+        print '\n'
+        print NineStage
         for y,row in enumerate(self._b):
             if y % 3 == 0: print rowDivider
-            pstring = ""
+            pstring = ""+str(y)
             for x,val in enumerate(row):
                 if (x) % 3 == 0: pstring = pstring+'|'
                 pstring = pstring+str(val)+' '
@@ -54,9 +59,9 @@ class Sudoku:
                 if (x) % 3 == 0: pstring = pstring+'|'
 
                 try:
-                    val = str(len(self.getPossible(y,x)))
+                    val = str(len(self.getPossibleCheckingSurrounding(y,x, True)))
                 except SudokuException, e:
-                    val = str(0)
+                    val = 'x'
                 pstring = pstring+ val + ' '
             pstring = pstring+'|'
             print pstring
@@ -73,15 +78,58 @@ class Sudoku:
             raise SudokuException("Value is out of bounds")
 
 
+    """ ------------------------------------------
+        Board Checking Operations
+    """
+    def isComplete(self):
+        for i in xrange(self._size):
+            if not (len(set(self.getRow(i))) == len(self.getRow(i))) or \
+                    not (len(self.getRow(i)) == self._size):
+                return False
+            if not (len(set(self.getColumn(i))) == len(self.getColumn(i))) or \
+                    not (len(self.getColumn(i)) == self._size):
+                return False
+            if not (len(set(self.getSquare(i))) == len(self.getSquare(i))) or \
+                    not (len(self.getSquare(i)) == self._size):
+                return False
+        return True
+
+    def isValid(self):
+        """
+        Need to check all non-none elements to see if there is a depth greater than zero
+        for all non-filled in squares.
+
+        Collect a list of non items, then run the comparison on all of them.
+
+        """
+
+        for row, r in enumerate(self._b):
+            for column,item in enumerate(r):
+                try:
+                    l = self.getPossible(row, column)
+                    if len(l) < 1 and item == Node(None):
+                        return False
+                except SudokuException,e:
+                    continue
+        return True
+
+
+
+
+
 
 
     """ ------------------------------------------
         Getter Functions
     """
-    def getBoard(self):
-        return self._b
+    def getSize(self): return self._size
+    def getBoard(self): return self._b
 
     def getRow(self, val):
+        """
+        This get's all the valid used nodes in a row.
+        :param : Val : <int> Integer inside the row space of the sudoku board
+        """
         try:
             self._inbounds(val)
         except SudokuException,e:
@@ -95,6 +143,10 @@ class Sudoku:
         return row
 
     def getColumn(self, val):
+        """
+        This get's all the valid used nodes in a column.
+        :param : Val : <int> Integer inside the column space of the sudoku board
+        """
         try:
             self._inbounds(val)
         except SudokuException,e:
@@ -107,19 +159,25 @@ class Sudoku:
         return column
 
     def getSquare(self, val):
+        """
+        This get's all the valid used nodes in a soduku Square.
+        :param : Val : <int> Integer inside the square space of the sudoku board
+        """
+
         sq = math.sqrt(self._size)
         row = math.floor(float(val)/sq)
         column = val % sq
         sqResult = []
         for j in xrange(3):
-            sqRow = []
+            # sqRow = []
             for i in xrange(3):
                 if not (self._b[int(row*sq+j)][int(column*sq+i)] == Node(None)):
-                    sqRow.append(self._b[int(row*sq+j)][int(column*sq+i)])
-            sqResult.append(sqRow)
+                    sqResult.append(self._b[int(row*sq+j)][int(column*sq+i)])
+            # sqResult.append(sqRow)
         return sqResult
 
     def getSquareFromPoint(self, row, column):
+        """ Given a point on the board, return the square of which it resides"""
         sq = math.sqrt(self._size)
         cubeRow = math.floor(row/sq)
         cubeColumn = math.floor(column/sq)
@@ -129,29 +187,72 @@ class Sudoku:
 
 
     def getPossible(self, row, column):
+        """
+        :param: row<int>,
+        :param: column<int>
+
+        :return: List<int>
+        """
         if not (self._b[row][column] == Node(None)):
             raise SudokuException("Given node is already filled")
+        # neighRow = self.getSurroundingRow(row)
+        # neighCol = self.getSurroundingCol(column)
         usedRow = self.getRow(row)
         usedCol = self.getColumn(column)
         usedSq = self.getSquare(self.getSquareFromPoint(row,column))
 
         totalUsed = set(usedRow)
         for i in usedCol: totalUsed.add(i)
-        for row in usedSq:
-            for val in row:
-                totalUsed.add(val)
+        for i in usedSq: totalUsed.add(i)
 
         notUsed = list(self._validList - totalUsed)
         return notUsed
 
+    def getPossibleCheckingSurrounding(self, row, column, checkSurroundings=True):
+        sq = math.sqrt(self._size)
+        cubeRow = math.floor(row/sq)
+        cubeColumn = math.floor(column/sq)
+
+        possibleList = self.getPossible(row, column)
+        sim = set([])
+        aSurCol, aSurRow, bSurCol, bSurCol = [],[],[],[]
+
+        if checkSurroundings:
+            aSurRow, bSurRow = self._getSurRow(cubeRow, row)
+            aSurCol, bSurCol = self._getSurCol(cubeColumn, column)
+
+            for item in possibleList:
+                if (item in aSurRow) and (item in bSurRow) and (item in aSurCol) and (item in bSurCol):
+                    sim.add(item)
+
+        if len(sim) == 1:
+            simList = list(sim)
+            return simList
+        elif len(sim) > 1:
+            # raise RuntimeError("'sim' list is greater length than 1, this should NEVER happen")
+            print "Multiple sim Length"
+            print " Possible List: ",possibleList
+            print " Surrounding Row's ",aSurRow, bSurRow
+            print " Surrounding Col's ",aSurCol, bSurCol
+            print " Sim List", sim
+            raise RuntimeError("SimList has failed by having multiple values.")
+        else:
+            return possibleList
+
     def getDepthOf(self,val):
+        """
+        :param: val<int>: depth of square you're looking for
+        :return: List<[possible Values],row,column> :: touple
+
+        """
         depthList = []
         for row,r in enumerate(self._b):
             for column,v in enumerate(r):
                 try:
-                    possibleList = self.getPossible(row,column)
+                    possibleList = self.getPossibleCheckingSurrounding(row,column, True)
                     if len(possibleList) == val:
-                        depthList.append((possibleList[0],row,column))
+                        depthList.append((possibleList,row,column))
+
                 except SudokuException,e:
                     continue
         return depthList
@@ -161,13 +262,61 @@ class Sudoku:
         for row,r in enumerate(self._b):
             for column,v in enumerate(r):
                 try:
-                    possibleList = self.getPossible(row,column)
+                    possibleList = self.getPossibleCheckingSurrounding(row,column, True)
                     if len(possibleList) == val:
                         counter = counter + 1
                 except SudokuException,e:
                     continue
         return counter
 
+    def getNumUnsolved(self):
+        counter = 0
+        for row,r in enumerate(self._b):
+            for column,v in enumerate(r):
+                try:
+                    possibleList = self.getPossibleCheckingSurrounding(row,column)
+                    counter = counter + 1
+                except SudokuException,e:
+                    continue
+        return counter
+
+    def _getSurCol(self, cubeCol, col):
+        colMod = (col) % 3
+        ASet = set()
+        BSet = set()
+
+        if colMod == 0:
+            for i in self.getRow(col+1): ASet.add(i)
+            for j in self.getRow(col+2): BSet.add(j)
+        elif colMod == 1:
+            for i in self.getRow(col+1): BSet.add(i)
+            for j in self.getRow(col-1): ASet.add(j)
+        elif colMod == 2:
+            for i in self.getRow(col-1): ASet.add(i)
+            for j in self.getRow(col-2): BSet.add(j)
+
+        AList = list(ASet)
+        BList = list(BSet)
+        return AList,BList
+
+    def _getSurRow(self, cubeRow, row):
+        rowMod = (row) % 3
+        ASet = set()
+        BSet = set()
+
+        if rowMod == 0:
+            for i in self.getRow(row+1): ASet.add(i)
+            for j in self.getRow(row+2): BSet.add(j)
+        elif rowMod == 1:
+            for i in self.getRow(row+1): BSet.add(i)
+            for j in self.getRow(row-1): ASet.add(j)
+        elif rowMod == 2:
+            for i in self.getRow(row-1): ASet.add(i)
+            for j in self.getRow(row-2): BSet.add(j)
+
+        AList = list(ASet)
+        BList = list(BSet)
+        return AList,BList
 
     """ -----------------------------------
         Setter Function
@@ -182,7 +331,8 @@ class Sudoku:
         if not value in possible:
             return False
         else:
-            self._b[row][column] = Node(value, self._size)
+            print "Placing ", column, row, value
+            self._b[row][column].setVal(value)
             return True
 
 
@@ -195,6 +345,13 @@ class SudokuException(Exception):
     def __str__(self):
         return repr(self.value)
 class SudokuNodeException(Exception):
+    """ NODE Exception Class """
+    def __init__(self,value):
+        self.value = value
+    def __str__(self):
+        return repr(self.value)
+
+class InvalidBoard(Exception):
     """ NODE Exception Class """
     def __init__(self,value):
         self.value = value

@@ -3,7 +3,9 @@ class Node():
         self._maxSize = maxSize
         self._minSize = minSize
         self._value = None
+        self._usedVals = []
         self.setVal(value)
+
 
 
             
@@ -25,7 +27,10 @@ class Node():
         if value is None: self._value = None
         elif value > self._maxSize : raise NodeException("Value is greater than maxSize")
         elif value < self._minSize : raise NodeException("Value ie less than minSize")
-        else: self._value = value
+        elif value in self._usedVals:raise NodeException("Value has already been tried")
+        else:
+            self._value = value
+            self._usedVals.append(value)
 
 
     def string(self):
@@ -43,4 +48,6 @@ class NodeException(Exception):
         self.value = value
     def __str__(self):
         return repr(self.value)
+
+
 
