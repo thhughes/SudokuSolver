@@ -1,6 +1,6 @@
 __author__ = 'troyhughes'
-from Sudoku import board
-from Sudoku.board import InvalidBoard
+from Sudoku import Sudoku
+from Sudoku.Sudoku import InvalidBoard
 from Sudoku.Node import NodeException
 
 class SudokuCSP:
@@ -114,7 +114,7 @@ class SudokuCSP:
 
         priorityList = solveAlg(oldBoard)
         nodeList, row, column = priorityList[0]
-        newBoard = board.Sudoku(oldBoard.getSize(), oldBoard.getBoard())
+        newBoard = Sudoku.Sudoku(oldBoard.getSize(), oldBoard.getBoard())
         placedNode = False
 
         for node in nodeList:
@@ -206,6 +206,6 @@ class DeadEndError(Exception):
 
 
 print "Starting"
-s = board.Sudoku(9,board.makeSudokuBoard('Sudoku/Board01.txt'))
+s = Sudoku.Sudoku(9,Sudoku.makeSudokuBoard('Sudoku/Board01.txt'))
 solver = SudokuCSP(s)
 solver.solve()

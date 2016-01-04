@@ -1,6 +1,6 @@
 class Node():
     """
-    This class is a class that feeds the Sudoku class (in the board.py file).
+    This class is a class that feeds the Sudoku class (in the Sudoku.py file).
 
     This class is a data structure for managing what nodes have ben tried in
     specific places.
