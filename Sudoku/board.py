@@ -13,7 +13,7 @@ class Sudoku:
         self._setBoard(populatedBoard)
         self._validList = set()
         for i in xrange(size):
-            self._validList.add(Node(i+1,size))
+            self._validList.add(Node(i+1,maxSize=size))
 
 
 
@@ -24,11 +24,20 @@ class Sudoku:
 
 
     def _setBoard(self, someBoard):
-        self._b = [[]]
+        self._b = []
         if self._size != len(someBoard) and self._size != len(someBoard[0]):
             raise SudokuException("Board provided does not match set board size")
-        self._b = someBoard
 
+        for i,row in enumerate(someBoard):
+            temp = []
+            for j,val in enumerate(row):
+                # if i == 0 and j == 1:
+                    # print "board._setBoard..VALs", i,j,val.usedVals()
+                    # a = Node(val(), usedList=val.usedVals(), maxSize=self._size, minSize=1)
+                    # print "THe a'th node is: ", a
+                    # print "It's used vals are:", a.usedVals()
+                temp.append(Node(val(), val.usedVals(), self._size, 1))
+            self._b.append(temp)
 
 
 
@@ -69,6 +78,10 @@ class Sudoku:
         return ""
 
     def show(self):
+        print '\n'
+        print "This board complete and valid stats: "
+        print "Complete", self.isComplete()
+        print "Valid", self.isValid()
         self._printCurrentBoard()
         self.printDepthMap()
 
@@ -224,7 +237,6 @@ class Sudoku:
             for item in possibleList:
                 if (item in aSurRow) and (item in bSurRow) and (item in aSurCol) and (item in bSurCol):
                     sim.add(item)
-
         if len(sim) == 1:
             simList = list(sim)
             return simList
@@ -286,14 +298,14 @@ class Sudoku:
         BSet = set()
 
         if colMod == 0:
-            for i in self.getRow(col+1): ASet.add(i)
-            for j in self.getRow(col+2): BSet.add(j)
+            for i in self.getColumn(col+1): ASet.add(i)
+            for j in self.getColumn(col+2): BSet.add(j)
         elif colMod == 1:
-            for i in self.getRow(col+1): BSet.add(i)
-            for j in self.getRow(col-1): ASet.add(j)
+            for i in self.getColumn(col+1): BSet.add(i)
+            for j in self.getColumn(col-1): ASet.add(j)
         elif colMod == 2:
-            for i in self.getRow(col-1): ASet.add(i)
-            for j in self.getRow(col-2): BSet.add(j)
+            for i in self.getColumn(col-1): ASet.add(i)
+            for j in self.getColumn(col-2): BSet.add(j)
 
         AList = list(ASet)
         BList = list(BSet)
@@ -327,14 +339,37 @@ class Sudoku:
             possible = self.getPossible(row,column)
         except SudokuException,e:
             raise SudokuNodeException("There are no possible values for this locaiton")
+        # if value == 1 and row == 0 and column == 1:
+        #     print "DEBUG: \t ",self._b[row][column].hasUsed(value)
+        #     print "\t\t", self._b[row][column].usedVals()
+        #     print "\t\t", value
+
 
         if not value in possible:
             return False
+        elif value in self._b[row][column].usedVals():
+            return False
         else:
-            print "Placing ", column, row, value
+            print "DEBUG: \t\t\t board.placeNode(val,row,col) ", value, row, column
             self._b[row][column].setVal(value)
             return True
 
+    def setConstraint(self, value, row, column):
+        """
+        This set's a node constraint that tells a node it cannot be a specific value. Constraints should
+        only be added to nodes that don't have a point already set.
+        :param board: List of List of <Node> :: Representation of the sudoku board
+        :param value: <int>
+        :param row:   <int>
+        :param column: <int>
+        :return: Boolean : T-it correctly made the constraint, F-the value is not possible
+        :raise : SudokuException : the Node you want to get is not reachable.
+        """
+        try:
+            self._b[row][column].addConstraint(value)
+
+        except SudokuException,e:
+            raise SudokuNodeException("There are no possible values for this locaiton")
 
 
 
