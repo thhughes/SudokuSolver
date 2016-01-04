@@ -4,21 +4,78 @@ from Sudoku.board import InvalidBoard
 from Sudoku.Node import NodeException
 
 class SudokuCSP:
+    """
+    This class uses Constraint Satisfaction to solve Sudoku puzzles.
+
+    The class uses the following constraints:
+        - Each row must contian a set of numbers from 1 to n
+        - Each column must contain a set of numbers from 1 to n
+        - There are n, sqrt(n) by sqrt(n) cubes, creating a board that is n by n
+            of which the whole board was sqrt(n) by sqrt(n) boards.
+        - Each square contains a set of numbers from 1 to n
+        - Because each row and column must be a set of numbers from 1 to n,
+            a given set of sqrt(n) rows/columns within a square must contain
+            only sqrt(n) copies of a given number.
+
+    The current version of this program (Jan 4, 2016, 10:08:00 AM) does not use
+        heuristic search. It is a depth first search algorithm that prioritizes nodes with
+        one numeric option, then prioritizes the nodes with the largest number of numeric
+        options next.
+
+    Future Updates: The future update is to add a huristic function that evaluates the
+        'influence' of filling a node and rates them based off their influence. This means that
+        if filling a node will reduce the number of options for 3n-2sqrt(n) (the maximum number
+        of nodes impactable if only observing a row, column, and square) then that node should
+        be a very high priority. Conversly, if filling a node reduces 0 neighboring nodes, than
+        it should be a very low priority.
+
+    Internal Parameters:
+        _stack        :: list of Sudoku Boards
+                    - This data structure provides the class the ability to dig into the search
+                      tree and then back out if a dead end is found. The maximum length of this
+                      is m, or the number of empty cells that are presented at the start of the
+                      puzzle.
+        archiveRecipt :: Integer
+                    - This int is used to track the depth of the _stack. Whenever something is
+                      Put on the stack this item is incremented. If something is popped from the
+                      stack it is decremented.
+        currentB      :: Sudoku Board
+                    - This is the current sudoku board object being worked with.
+
+
+    """
     def __init__(self, board):
+        """
+
+        :param board: Sudoku Board Object
+        :return:
+        """
         self._stack = [board]
         self.archiveRecipt = 0
 
 
 
-    def solve(self):
+    def solve(self, DEBUG = False):
+        """
+        This function uses Constraint Satisfaction to solve the sudoku board that is passed
+        during the constructor
+        :return: Solved Sudoku Board
+        """
+        print "Solving, please wait..."
+
         self.currentB = self.getBoard()
         while not self.currentB.isComplete():
-            # print "DEBUG:"
-            # print '\t'+"Is current valid", self.currentB.isValid()
-            # print '\t'+"The number squares to solve", self.currentB.getNumUnsolved()
-            # print '\t'+"The number of boards stored...", len(self._stack)
-            # print '\t'+"The stack contents are"+'\n', self._stack
+            if DEBUG:
+                print "DEBUG:"
+                print '\t'+"Is current valid", self.currentB.isValid()
+                print '\t'+"The number squares to solve", self.currentB.getNumUnsolved()
+                print '\t'+"The number of boards stored", self.archiveRecipt
+                print '\t'+"The stack contents are"+'\n', self._stack
             try:
+                """
+                    This section is the general search function. It is the algorithm to find the solution
+                    and '_iterate()' will error out with a 'DeadEndError' to be caught in the except.
+                """
                 while self.currentB.isValid() and not self.currentB.isComplete():
                     oldBoard, newBoard = self._iterate(self.currentB, self._solveOne)
                     self._archive(oldBoard, newBoard)
@@ -26,10 +83,16 @@ class SudokuCSP:
                     self._popInvalid()
                 self.currentB = self.getBoard()
             except DeadEndError,e:
-                print e
+                """
+                    This section happens when the above section finds a dead end. Dead ends happen
+                    when there are (y) options where 0 of them are valid. This part get's out of a
+                    dead end as opposed to an invalid decision.
+                """
+                if DEBUG: print "Dead end found, try another route"
                 self._popInvalid()
                 self.currentB = self.getBoard()
         self.currentB.show()
+        return self.currentB
 
     ## ------------------------------------------------------------------------
 
@@ -43,6 +106,10 @@ class SudokuCSP:
         :param board: this is the sudoku board to run the algorithm on
         :param solveAlg: this is the solving algorithm that takes in a board and a decision function
         :return: newBoard, oldBoard :: each Board is a Sudoku Board
+        :raise: DeadEndError :: If there are 0 nodes that can be filled in that have not been tried out
+                This catches a special case where a valid board exists but none of the soltions from that
+                branch of the search tree are valid. THe main portion of the algorithm does not catch
+                this so the exception allows it to be caught.
         """
 
         priorityList = solveAlg(oldBoard)
@@ -53,12 +120,9 @@ class SudokuCSP:
         for node in nodeList:
             if newBoard.placeNode(node(), row, column):
                 oldBoard.setConstraint(node(), row, column)
-                placedNode = True
-                break
+                return oldBoard, newBoard
 
-        if placedNode == False:
-            raise DeadEndError("None of the nodes found are viable, this is a dead end.")
-        return oldBoard, newBoard
+        raise DeadEndError("None of the nodes found are viable, this is a dead end.")
 
 
 

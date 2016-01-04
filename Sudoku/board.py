@@ -4,16 +4,37 @@ from Node import NodeException
 import math
 
 class Sudoku:
+    """
+        This is the Sudoku Board class. It was constructed to represent n by n sudoku boards
+        where the sudoku cubes in the board are sqrt(n) by sqrt(n).
+
+    """
     def __init__(self, size, populatedBoard):
+        """
+
+        :param size: <int> representing the n in the n by n sudoku board
+        :param populatedBoard : list of lists of Nodes where there are n items in each list.
+        :raise:
+            SudokuException if n doe not contain a round square root.
+            SudokuException if each list does not contain n items
+        """
         if math.floor(math.sqrt(size)) != math.ceil(math.sqrt(size)):
             raise SudokuException("The value you have provided is not a perfect square, "
                                   "therefore you cannot make a Sudoku board out of it")
         self._size = size
         self._b = [[]]
+        if not (len(populatedBoard) == self._size):
+            raise SudokuException("You don not have enough Row's in this sudoku board")
+        for r,row in enumerate(populatedBoard):
+            if not (len(row)==self._size):
+                raise SudokuException("Row "+str(r)+" does not have the proper number of elements (zero indexed)")
+
         self._setBoard(populatedBoard)
-        self._validList = set()
+        self._validSet = set()
+
+        ## Create a '_validSet' of nodes to know the allowable nodes
         for i in xrange(size):
-            self._validList.add(Node(i+1,maxSize=size))
+            self._validSet.add(Node(i+1,maxSize=size))
 
 
 
@@ -24,6 +45,12 @@ class Sudoku:
 
 
     def _setBoard(self, someBoard):
+        """
+        stores a list of list of Nodes in the class. Does it in a way that the class can manipulate it
+        and ensure that this is not linked by reference to another class.
+
+        :param: someBoard : List of List of Nodes
+        """
         self._b = []
         if self._size != len(someBoard) and self._size != len(someBoard[0]):
             raise SudokuException("Board provided does not match set board size")
@@ -42,14 +69,14 @@ class Sudoku:
 
 
     def _printCurrentBoard(self):
-
         NineStage = "--0-1-2--3-4-5--6-7-8"
         rowDivider = "----------------------"
         print '\n'
-        print NineStage
+        # print NineStage
         for y,row in enumerate(self._b):
             if y % 3 == 0: print rowDivider
-            pstring = ""+str(y)
+            # pstring = ""+str(y)
+            pstring = ""
             for x,val in enumerate(row):
                 if (x) % 3 == 0: pstring = pstring+'|'
                 pstring = pstring+str(val)+' '
@@ -95,6 +122,9 @@ class Sudoku:
         Board Checking Operations
     """
     def isComplete(self):
+        """
+            Check if the board is complete.
+        """
         for i in xrange(self._size):
             if not (len(set(self.getRow(i))) == len(self.getRow(i))) or \
                     not (len(self.getRow(i)) == self._size):
@@ -204,12 +234,12 @@ class Sudoku:
         :param: row<int>,
         :param: column<int>
 
-        :return: List<int>
+        :return: List<Nodes>
+        :raise : SudokuException if that node has already been filled.
         """
         if not (self._b[row][column] == Node(None)):
             raise SudokuException("Given node is already filled")
-        # neighRow = self.getSurroundingRow(row)
-        # neighCol = self.getSurroundingCol(column)
+
         usedRow = self.getRow(row)
         usedCol = self.getColumn(column)
         usedSq = self.getSquare(self.getSquareFromPoint(row,column))
@@ -218,10 +248,17 @@ class Sudoku:
         for i in usedCol: totalUsed.add(i)
         for i in usedSq: totalUsed.add(i)
 
-        notUsed = list(self._validList - totalUsed)
+        notUsed = list(self._validSet - totalUsed)
         return notUsed
 
     def getPossibleCheckingSurrounding(self, row, column, checkSurroundings=True):
+        """
+
+        :param row: <int>
+        :param column: <int>
+        :param checkSurroundings: <boolean>
+        :return: List of possible Nodes
+        """
         sq = math.sqrt(self._size)
         cubeRow = math.floor(row/sq)
         cubeColumn = math.floor(column/sq)
@@ -241,7 +278,13 @@ class Sudoku:
             simList = list(sim)
             return simList
         elif len(sim) > 1:
-            # raise RuntimeError("'sim' list is greater length than 1, this should NEVER happen")
+            """
+                This is the similarity list check. this means that of the values that are possible, if that
+                value is used in all of the surrounding row's and columns, then that value is 'similar' and
+                is the ONLY possible value for that locaiton. HOWEVER, if by some reaoson there are more than
+                one values being passed through the simList, then it is important to find that out and catch it.
+                It should NEVER happen.
+            """
             print "Multiple sim Length"
             print " Possible List: ",possibleList
             print " Surrounding Row's ",aSurRow, bSurRow
@@ -253,6 +296,8 @@ class Sudoku:
 
     def getDepthOf(self,val):
         """
+        Return a list of the specific depth of the nodes not yet selected.
+
         :param: val<int>: depth of square you're looking for
         :return: List<[possible Values],row,column> :: touple
 
@@ -270,6 +315,10 @@ class Sudoku:
         return depthList
 
     def getCountOfDepth(self,val):
+        """
+        :param: val<int> depth of square you're looking for
+        :return: <int> number of the depth you were looking for.
+        """
         counter = 0
         for row,r in enumerate(self._b):
             for column,v in enumerate(r):
@@ -282,6 +331,7 @@ class Sudoku:
         return counter
 
     def getNumUnsolved(self):
+        """ Returns the number of unsolved nodes in a puzzle"""
         counter = 0
         for row,r in enumerate(self._b):
             for column,v in enumerate(r):
@@ -293,6 +343,12 @@ class Sudoku:
         return counter
 
     def _getSurCol(self, cubeCol, col):
+        """
+
+        :param cubeCol<int>: The colomn cube that your column is in.
+        :param col<int>    : The column that you want surroundings for
+        :return AList,BList: List of Nodes representing the two columns surrounding the col passed.
+        """
         colMod = (col) % 3
         ASet = set()
         BSet = set()
@@ -312,6 +368,12 @@ class Sudoku:
         return AList,BList
 
     def _getSurRow(self, cubeRow, row):
+        """
+
+        :param cubeRow<int>: The Row cube that your Row is in.
+        :param Row<int>    : The Row that you want surroundings for
+        :return AList,BList: List of Nodes representing the two Rows surrounding the row passed.
+        """
         rowMod = (row) % 3
         ASet = set()
         BSet = set()
@@ -335,22 +397,24 @@ class Sudoku:
     """
 
     def placeNode(self,value, row, column):
+        """
+        Fills a node with a value.
+        :param value: <int> between 1 and self._size (n)
+        :param row:   <int> between 0 and self._size-1 (n-1)
+        :param column: <int> between 0 and self._size-1 (n-1)
+        :return: Boolean : True if the value was placed. False if the value was not ecause it's not possible or
+                            was already used.
+        """
         try:
             possible = self.getPossible(row,column)
         except SudokuException,e:
             raise SudokuNodeException("There are no possible values for this locaiton")
-        # if value == 1 and row == 0 and column == 1:
-        #     print "DEBUG: \t ",self._b[row][column].hasUsed(value)
-        #     print "\t\t", self._b[row][column].usedVals()
-        #     print "\t\t", value
-
 
         if not value in possible:
             return False
         elif value in self._b[row][column].usedVals():
             return False
         else:
-            print "DEBUG: \t\t\t board.placeNode(val,row,col) ", value, row, column
             self._b[row][column].setVal(value)
             return True
 
@@ -414,12 +478,3 @@ def makeSudokuBoard(fileName):
         board.append(soduku_row)
         soduku_row = []
     return board
-
-
-# print "Starting"
-# makeSudokuBoard('Board00.txt')
-# s = Sudoku(9,makeSudokuBoard('Board00.txt'))
-# print s
-# s.printDepthMap()
-
-
