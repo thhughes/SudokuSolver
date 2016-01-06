@@ -77,7 +77,7 @@ class SudokuCSP:
                     and '_iterate()' will error out with a 'DeadEndError' to be caught in the except.
                 """
                 while self.currentB.isValid() and not self.currentB.isComplete():
-                    oldBoard, newBoard = self._iterate(self.currentB, self._solveOne)
+                    oldBoard, newBoard = self._iterate(self.currentB, self._SmallestToLargetList)
                     self._archive(oldBoard, newBoard)
                 if not self.currentB.isValid():
                     self._popInvalid()
@@ -178,7 +178,7 @@ class SudokuCSP:
     ## ------------------------------------------------------------------------
 
 
-    def _solveOne(self, oldSudoku):
+    def _SinglesThenLargeNodeLists(self, oldSudoku):
         """
         This function takes in a board and an evaluation function. From those it returns a priority list of
         node solutions to try.
@@ -190,6 +190,12 @@ class SudokuCSP:
         totalList = []
         totalList.extend(onesList)
         for i in list(range(1+1,oldSudoku.getSize()+1)):
+            totalList.extend(oldSudoku.getDepthOf(i))
+        return totalList
+
+    def _SmallestToLargetList(self, oldSudoku):
+        totalList = []
+        for i in xrange(oldSudoku.getSize()+1):
             totalList.extend(oldSudoku.getDepthOf(i))
         return totalList
 
